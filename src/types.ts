@@ -35,8 +35,13 @@ export interface WindowConfig {
 export interface EmbedElementConfig {
   /** Custom-element tag. Must contain a hyphen (HTML spec for custom elements). */
   elementTag: string;
-  /** The Angular standalone component to render. Typed loosely to avoid a peer dep. */
-  component: unknown;
+  /**
+   * The Angular standalone component to render. Typed loosely to avoid a peer dep.
+   * Optional in v0.1 (the descriptor strips it anyway), so producers can author a
+   * pure-data config with no Angular imports for build-time descriptor emit.
+   * v0.2 codegen will require it to generate the registration boilerplate.
+   */
+  component?: unknown;
   /** Human-readable description shown in the host's connection UI. */
   description?: string;
   /** Route paths this element can deep-link into, surfaced as a dropdown host-side. */

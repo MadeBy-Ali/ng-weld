@@ -91,6 +91,11 @@ descriptor is pure, safe-to-serve JSON — and `defineExport` is derived
 deterministically from `elementTag` (`remote-ag-dipa-element` →
 `defineRemoteAgDipaElement`).
 
+> **Tip (v0.1):** `component` and `appProviders` are **optional** — so you can author
+> a pure-data `embed.config.mjs` with *no* Angular imports and emit the descriptor from
+> a plain `node` build step, with zero risk of a browser-only import crashing it. v0.2's
+> codegen will consume them to generate the registration boilerplate.
+
 ## Consuming the descriptor (host side)
 
 The **same package** validates the descriptor on the host. Instead of hand-parsing

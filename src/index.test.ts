@@ -85,13 +85,10 @@ describe('defineEmbed', () => {
     expect(() => defineEmbed(validConfig({ elements: [] }))).toThrow(/non-empty array/);
   });
 
-  it('rejects an element missing its component', () => {
+  it('allows an element without a component (v0.1 descriptor-only authoring)', () => {
     expect(() =>
-      defineEmbed(
-        // @ts-expect-error — component intentionally omitted
-        validConfig({ elements: [{ elementTag: 'remote-a-element' }] }),
-      ),
-    ).toThrow(/missing its component/);
+      defineEmbed(validConfig({ elements: [{ elementTag: 'remote-a-element' }] })),
+    ).not.toThrow();
   });
 });
 

@@ -61,10 +61,6 @@ export function defineEmbed(config: EmbedConfig): EmbedConfig {
       throw new EmbedConfigError(`duplicate elementTag "${el.elementTag}"`);
     }
     seenTags.add(el.elementTag);
-
-    if (el.component == null) {
-      throw new EmbedConfigError(`element "${el.elementTag}" is missing its component`);
-    }
   }
 
   return config;
