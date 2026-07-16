@@ -1,0 +1,57 @@
+{
+  "name": "ng-weld",
+  "version": "0.1.0",
+  "description": "Weld Angular Module Federation remotes to a host shell: one typed contract for declaring embeddable components, emitted as a descriptor JSON the host consumes. Angular micro-frontend embed manifest.",
+  "keywords": [
+    "angular",
+    "module-federation",
+    "microfrontend",
+    "mfe",
+    "native-federation",
+    "embed",
+    "custom-elements",
+    "manifest",
+    "descriptor",
+    "weld"
+  ],
+  "license": "MIT",
+  "author": "irsyadali1",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MadeBy-Ali/ng-weld.git"
+  },
+  "homepage": "https://github.com/MadeBy-Ali/ng-weld#readme",
+  "bugs": {
+    "url": "https://github.com/MadeBy-Ali/ng-weld/issues"
+  },
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
