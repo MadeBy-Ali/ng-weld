@@ -1,6 +1,6 @@
 {
   "name": "ng-weld",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Weld Angular Module Federation remotes to a host shell: one typed contract for declaring embeddable components, emitted as a descriptor JSON the host consumes. Angular micro-frontend embed manifest.",
   "keywords": [
     "angular",
