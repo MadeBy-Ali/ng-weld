@@ -18,15 +18,15 @@ function validConfig(overrides: Partial<EmbedConfig> = {}): EmbedConfig {
   return {
     provider: 'ANGULAR_COMPONENT',
     exposedModule: './WebComponent',
-    windowConfigKey: '__agDipaConfig',
-    navigateEventName: 'remoteAgDipa:navigate',
-    defaultWindowConfig: { basePath: '/ag-dipa-widget', mfeName: 'remoteAgDipa' },
+    windowConfigKey: '__remoteReportsConfig',
+    navigateEventName: 'remoteReports:navigate',
+    defaultWindowConfig: { basePath: '/reports-widget', mfeName: 'remoteReports' },
     elements: [
       {
-        elementTag: 'remote-ag-dipa-element',
+        elementTag: 'remote-reports-element',
         component: RemoteEntryComponent,
-        description: 'Full Ag-DIPA dashboard',
-        acceptsRoutes: ['/dashboard/revisi'],
+        description: 'Full Reports dashboard',
+        acceptsRoutes: ['/reports/latest'],
       },
     ],
     ...overrides,
@@ -53,7 +53,7 @@ describe('defineEmbed', () => {
   });
 
   it('rejects a windowConfigKey without the __ prefix', () => {
-    expect(() => defineEmbed(validConfig({ windowConfigKey: 'agDipaConfig' }))).toThrow(
+    expect(() => defineEmbed(validConfig({ windowConfigKey: 'reportsConfig' }))).toThrow(
       /must start with "__"/,
     );
   });
@@ -62,7 +62,7 @@ describe('defineEmbed', () => {
     expect(() =>
       defineEmbed(
         validConfig({
-          elements: [{ elementTag: 'remoteagdipa', component: RemoteEntryComponent }],
+          elements: [{ elementTag: 'remotereports', component: RemoteEntryComponent }],
         }),
       ),
     ).toThrow(/must contain a hyphen/);
@@ -94,7 +94,7 @@ describe('defineEmbed', () => {
 
 describe('deriveDefineExport', () => {
   it('converts a kebab tag to a define<Pascal> name', () => {
-    expect(deriveDefineExport('remote-ag-dipa-element')).toBe('defineRemoteAgDipaElement');
+    expect(deriveDefineExport('remote-reports-element')).toBe('defineRemoteReportsElement');
   });
 
   it('handles a two-part tag', () => {
@@ -106,7 +106,7 @@ describe('toDescriptor', () => {
   it('derives defineExport and stamps the schema version', () => {
     const d = toDescriptor(validConfig());
     expect(d.schemaVersion).toBe(SCHEMA_VERSION);
-    expect(d.elements[0]?.defineExport).toBe('defineRemoteAgDipaElement');
+    expect(d.elements[0]?.defineExport).toBe('defineRemoteReportsElement');
   });
 
   it('carries exposedModule through (host Connection field)', () => {
@@ -121,8 +121,8 @@ describe('toDescriptor', () => {
 
   it('carries description and acceptsRoutes through', () => {
     const d = toDescriptor(validConfig());
-    expect(d.elements[0]?.description).toBe('Full Ag-DIPA dashboard');
-    expect(d.elements[0]?.acceptsRoutes).toEqual(['/dashboard/revisi']);
+    expect(d.elements[0]?.description).toBe('Full Reports dashboard');
+    expect(d.elements[0]?.acceptsRoutes).toEqual(['/reports/latest']);
   });
 
   it('omits optional fields when absent rather than emitting undefined', () => {
@@ -142,7 +142,7 @@ describe('serializeDescriptor', () => {
     expect(json.endsWith('\n')).toBe(true);
     const parsed = JSON.parse(json);
     expect(parsed.provider).toBe('ANGULAR_COMPONENT');
-    expect(parsed.elements[0].defineExport).toBe('defineRemoteAgDipaElement');
+    expect(parsed.elements[0].defineExport).toBe('defineRemoteReportsElement');
   });
 });
 
@@ -151,13 +151,13 @@ describe('parseDescriptor (consumer side)', () => {
     const json = serializeDescriptor(validConfig());
     const d = parseDescriptor(json);
     expect(d.exposedModule).toBe('./WebComponent');
-    expect(d.windowConfigKey).toBe('__agDipaConfig');
-    expect(d.elements[0]?.defineExport).toBe('defineRemoteAgDipaElement');
+    expect(d.windowConfigKey).toBe('__remoteReportsConfig');
+    expect(d.elements[0]?.defineExport).toBe('defineRemoteReportsElement');
   });
 
   it('accepts an already-parsed object as well as a string', () => {
     const obj = toDescriptor(validConfig());
-    expect(parseDescriptor(obj).elements[0]?.elementTag).toBe('remote-ag-dipa-element');
+    expect(parseDescriptor(obj).elements[0]?.elementTag).toBe('remote-reports-element');
   });
 
   it('rejects a mismatched schemaVersion', () => {

@@ -4,7 +4,7 @@ import type { EmbedConfig, EmbedDescriptor, EmbedDescriptorElement } from './typ
 /**
  * Derive the deterministic registration-fn name for an element tag.
  *
- * `remote-ag-dipa-element` -> `defineRemoteAgDipaElement`
+ * `remote-reports-element` -> `defineRemoteReportsElement`
  *
  * Kept deterministic so the descriptor's `defineExport` can never drift from
  * the name the codegen (v0.2+) emits for the actual boilerplate.

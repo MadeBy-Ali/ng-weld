@@ -7,7 +7,7 @@ When several teams each ship an Angular Module Federation remote, every team inv
 `ng-weld` gives every remote **one typed way** to declare what it exposes, and produces **one predictable `embed-descriptor.json`** that any host can read — no more reading each remote's source to wire it up.
 
 ```
-remote's embed.config.ts  ──defineEmbed()──▶  validated contract
+remote's embed.config.mjs ──defineEmbed()──▶  validated contract
                                                      │
                                             serializeDescriptor()
                                                      │
@@ -21,80 +21,141 @@ remote's embed.config.ts  ──defineEmbed()──▶  validated contract
 npm install ng-weld
 ```
 
-## Usage
+## Quickstart for a remote (producer)
 
-In your remote, declare the contract once:
+ng-weld doesn't create your web-component — it **describes** one you already expose and emits a
+descriptor the host can read. Every remote follows the same seven steps.
 
-```ts
-// embed.config.ts
+**Prerequisite:** a native-federation Angular remote that exposes a web-component module (e.g.
+`'./WebComponent'`) with an async register function (e.g. `defineRemoteReportsElement()`) that is
+idempotent, reads `window[configKey]`, and calls `customElements.define(...)`. *(In v0.1 you keep
+writing that function by hand; v0.2 codegen will generate it — see the roadmap.)*
+
+### 1. Install (build-time dev dependency)
+
+```bash
+pnpm add -D ng-weld
+```
+
+### 2. Find your values
+
+| Descriptor field | Where it lives in your remote |
+| --- | --- |
+| `exposedModule` | `federation.config.js` → `exposes` key (e.g. `./WebComponent`) |
+| `elementTag` | your `*.element.ts` → `ELEMENT_NAME` (must contain a hyphen) |
+| `windowConfigKey` | the `window` key your element reads (must start with `__`) |
+| `navigateEventName` | the `CustomEvent` your component listens on |
+| `defaultWindowConfig` | your remote's `basePath` + `mfeName` (event-bus namespace) |
+
+`defineExport` is **derived** from `elementTag` (`remote-reports-element` → `defineRemoteReportsElement`) —
+just make sure your exported function uses that name.
+
+### 3. Declare the contract — `embed.config.mjs` (repo root)
+
+Author it as **pure data** (no Angular imports) so the emit runs in plain `node` with no risk of a
+browser-only import crashing the build:
+
+```js
+// embed.config.mjs
 import { defineEmbed } from 'ng-weld';
-import { RemoteEntryComponent } from './app/remote-entry.component';
-import { appConfig } from './app/app.config';
 
 export default defineEmbed({
   provider: 'ANGULAR_COMPONENT',
   exposedModule: './WebComponent',
-  windowConfigKey: '__agDipaConfig',
-  navigateEventName: 'remoteAgDipa:navigate',
-  defaultWindowConfig: { basePath: '/ag-dipa-widget', mfeName: 'remoteAgDipa' },
+  windowConfigKey: '__remoteReportsConfig',
+  navigateEventName: 'remoteReports:navigate',
+  name: 'Reports',
+  defaultWindowConfig: { basePath: '/reports-widget', mfeName: 'remoteReports' },
   elements: [
     {
-      elementTag: 'remote-ag-dipa-element',
-      component: RemoteEntryComponent,
-      description: 'Full Ag-DIPA dashboard',
-      acceptsRoutes: ['/dashboard/revisi'],
-      appProviders: [...appConfig.providers],
+      elementTag: 'remote-reports-element',
+      description: 'Full Reports remote (whole-page element).',
+      acceptsRoutes: ['/overview', '/details', '/dashboard'],
     },
+    // A remote exposing more web-components just adds more entries here.
   ],
 });
 ```
 
-`defineEmbed()` validates the contract at build time — `elementTag` must contain a
-hyphen, `windowConfigKey` must start with `__`, `provider` must be a known value,
-tags must be unique. Misconfiguration throws `EmbedConfigError` instead of failing
-silently at runtime.
+`defineEmbed()` validates as you write — hyphen in `elementTag`, `__` prefix on `windowConfigKey`,
+known `provider`, unique tags — throwing `EmbedConfigError` on any violation.
 
-Then emit the descriptor as part of your build:
+### 4. Emit the descriptor — `tools/emit-descriptor.mjs`
 
-```ts
-// emit-descriptor.ts (run after build, e.g. via a postbuild npm script)
-import { writeFileSync } from 'node:fs';
+```js
+// tools/emit-descriptor.mjs
+import { writeFileSync, mkdirSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { serializeDescriptor } from 'ng-weld';
-import config from './embed.config';
+import config from '../embed.config.mjs';
 
-writeFileSync('dist/embed-descriptor.json', serializeDescriptor(config));
+const outDir = resolve(dirname(fileURLToPath(import.meta.url)), '../public');
+mkdirSync(outDir, { recursive: true });
+writeFileSync(resolve(outDir, 'embed-descriptor.json'), serializeDescriptor(config));
+console.log('[emit-descriptor] wrote public/embed-descriptor.json');
 ```
 
-The result sits next to your `remoteEntry.json`:
+Emitting into `public/` is what makes the descriptor available in **both** `ng serve` (dev) and
+`ng build` (prod — Angular copies `public/` into the output, next to `remoteEntry.json`).
+
+### 5. Wire it into your build — run the emit *before* `ng build`
+
+```json
+{
+  "scripts": {
+    "start":      "node tools/emit-descriptor.mjs && node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\" && ng serve",
+    "build":      "node tools/emit-descriptor.mjs && ng build",
+    "build:prod": "node tools/emit-descriptor.mjs && ng build --configuration production",
+    "emit:descriptor": "node tools/emit-descriptor.mjs"
+  }
+}
+```
+
+### 6. Emit & verify
+
+```bash
+pnpm emit:descriptor        # or: pnpm build
+```
+
+Open it in a browser — it should sit right next to `remoteEntry.json`:
+
+```
+http://localhost:4204/embed-descriptor.json
+```
+
+The emitted JSON:
 
 ```json
 {
   "schemaVersion": 1,
   "provider": "ANGULAR_COMPONENT",
   "exposedModule": "./WebComponent",
-  "windowConfigKey": "__agDipaConfig",
-  "navigateEventName": "remoteAgDipa:navigate",
-  "defaultWindowConfig": { "basePath": "/ag-dipa-widget", "mfeName": "remoteAgDipa" },
+  "windowConfigKey": "__remoteReportsConfig",
+  "navigateEventName": "remoteReports:navigate",
+  "defaultWindowConfig": { "basePath": "/reports-widget", "mfeName": "remoteReports" },
+  "name": "Reports",
   "elements": [
     {
-      "elementTag": "remote-ag-dipa-element",
-      "defineExport": "defineRemoteAgDipaElement",
-      "description": "Full Ag-DIPA dashboard",
-      "acceptsRoutes": ["/dashboard/revisi"]
+      "elementTag": "remote-reports-element",
+      "defineExport": "defineRemoteReportsElement",
+      "description": "Full Reports remote (whole-page element).",
+      "acceptsRoutes": ["/overview", "/details", "/dashboard"]
     }
   ]
 }
 ```
 
-Note that runtime-only fields (`component`, `appProviders`) are stripped — the
-descriptor is pure, safe-to-serve JSON — and `defineExport` is derived
-deterministically from `elementTag` (`remote-ag-dipa-element` →
-`defineRemoteAgDipaElement`).
+`defineExport` is derived deterministically from `elementTag`, and the descriptor is pure,
+safe-to-serve JSON.
 
-> **Tip (v0.1):** `component` and `appProviders` are **optional** — so you can author
-> a pure-data `embed.config.mjs` with *no* Angular imports and emit the descriptor from
-> a plain `node` build step, with zero risk of a browser-only import crashing it. v0.2's
-> codegen will consume them to generate the registration boilerplate.
+### 7. Done
+
+The host shell now fetches your descriptor from the Remote Entry URL and auto-fills its Connection +
+DataSource forms. The remote team does nothing else.
+
+> **CORS:** the descriptor is fetched cross-origin, so your remote must send CORS headers — the same
+> requirement `remoteEntry.json` already meets.
 
 ## Consuming the descriptor (host side)
 

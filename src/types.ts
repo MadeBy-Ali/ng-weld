@@ -81,7 +81,7 @@ export interface EmbedConfig {
  */
 export interface EmbedDescriptorElement {
   elementTag: string;
-  /** Deterministic name of the generated registration fn, e.g. `defineRemoteAgDipaElement`. */
+  /** Deterministic name of the generated registration fn, e.g. `defineRemoteReportsElement`. */
   defineExport: string;
   description?: string;
   acceptsRoutes?: string[];
